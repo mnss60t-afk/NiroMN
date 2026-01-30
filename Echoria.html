@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Echoria</title>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;500;700&display=swap');
+
+        :root {
+            --bg-color: #050505;
+            --card-color: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent: #00ffc8;
+            --accent-glow: rgba(0, 255, 200, 0.2);
+            --text-main: #ffffff;
+            --text-dim: #888888;
+            --danger: #ff4d4d;
+        }
+
+        body {
+            margin: 0; background-color: var(--bg-color);
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            color: var(--text-main); font-family: 'Manrope', sans-serif; overflow-x: hidden; min-height: 100vh;
+        }
+
+        /* HEADER */
+        header {
+            position: sticky; top: 20px; margin: 0 30px; padding: 15px 30px;
+            border-radius: 20px; background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(20px); border: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center; z-index: 100;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .logo {
+            font-size: 20px; font-weight: 700; letter-spacing: 2px;
+            display: flex; align-items: center; gap: 10px; color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        /* BUTTONS */
+        button {
+            background: transparent; border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 10px 20px; border-radius: 12px;
+            cursor: pointer; font-family: inherit; font-weight: 500; font-size: 14px;
+            transition: 0.3s; display: flex; align-items: center; gap: 8px;
+        }
+        button:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+        
+        .btn-primary { background: var(--accent); color: #000; border: none; box-shadow: 0 0 20px var(--accent-glow); }
+        .btn-primary:hover { background: #00e6b4; transform: translateY(-2px); box-shadow: 0 0 30px var(--accent-glow); }
+        
+        .btn-danger { color: var(--danger); border-color: rgba(255,77,77,0.3); }
+        .btn-danger:hover { background: rgba(255,77,77,0.1); }
+        
+        .btn-icon { padding: 8px; border-radius: 50%; width: 34px; height: 34px; justify-content: center; }
+
+        .profile-section { display: flex; align-items: center; gap: 15px; }
+        .avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color); }
+        
+        /* GRID */
+        .container { padding: 40px 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; }
+
+        .card {
+            background: var(--card-color); border: 1px solid var(--border-color);
+            border-radius: 24px; padding: 30px; position: relative;
+            transform-style: preserve-3d; transition: 0.1s ease-out;
+        }
+        .card:hover { box-shadow: 0 0 30px rgba(0, 255, 200, 0.05); border-color: rgba(255,255,255,0.15); }
+
+        .card-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; transform: translateZ(20px); }
+        .creator { display: flex; align-items: center; gap: 10px; }
+        .creator img { width: 24px; height: 24px; border-radius: 50%; }
+        .creator span { font-size: 13px; color: var(--text-dim); }
+
+        .edit-controls { display: flex; gap: 5px; }
+
+        .card h2 { margin: 0 0 15px 0; font-size: 22px; font-weight: 700; transform: translateZ(30px); }
+        .card p { color: var(--text-dim); font-size: 15px; line-height: 1.6; height: 72px; overflow: hidden; margin-bottom: 20px; transform: translateZ(15px); }
+        
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; transform: translateZ(30px); border-top: 1px solid var(--border-color); padding-top: 20px; }
+        
+        .like-btn { color: var(--text-dim); border: none; background: none; padding: 0; display: flex; align-items: center; gap: 6px; }
+        .like-btn.active { color: #ff4081; } .like-btn.active svg { fill: #ff4081; stroke: #ff4081; }
+
+        .usage-stat { font-size: 12px; color: #555; position: absolute; bottom: 10px; right: 30px; transform: translateZ(10px); }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(15px);
+            z-index: 1000; display: none; justify-content: center; align-items: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #111; border: 1px solid var(--border-color);
+            padding: 40px; border-radius: 24px; width: 450px; max-width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+        input, textarea {
+            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+            color: #fff; padding: 14px; border-radius: 12px; margin-bottom: 15px;
+            font-family: inherit; font-size: 14px; box-sizing: border-box;
+        }
+        textarea { height: 120px; resize: none; }
+        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+        /* ADMIN PANEL STYLES */
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; text-align: center; }
+        .stat-num { font-size: 24px; font-weight: bold; color: var(--accent); }
+        .stat-label { font-size: 12px; color: var(--text-dim); }
+        
+        .user-list { max-height: 300px; overflow-y: auto; margin-top: 10px; }
+        .user-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); 
+        }
+        .user-info { display: flex; flex-direction: column; }
+        .user-actions { display: flex; gap: 5px; }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo"><i data-feather="cpu"></i> Echoria</div>
+    <div class="profile-section" id="authBlock"></div>
+</header>
+
+<div class="container">
+    <div class="grid" id="rolesGrid"></div>
+</div>
+
+<!-- AUTH -->
+<div class="modal-overlay" id="authModal">
+    <div class="modal">
+        <h2 id="authTitle">Вход</h2>
+        <input type="text" id="authName" placeholder="Никнейм">
+        <input type="password" id="authPass" placeholder="Пароль">
+        <div id="regFields" style="display:none">
+            <button onclick="document.getElementById('authFile').click()" class="btn" style="width:100%"><i data-feather="image"></i> Аватар</button>
+            <input type="file" id="authFile" hidden>
+        </div>
+        <button class="btn btn-primary" style="width:100%; margin-top:15px" onclick="submitAuth()">Поехали</button>
+        <div style="text-align:center; margin-top:20px; cursor:pointer; color:#888" onclick="toggleAuthMode()" id="authSwitch">Создать аккаунт</div>
+        <button class="btn" style="width:100%; margin-top:10px" onclick="closeModal('authModal')">Отмена</button>
+    </div>
+</div>
+
+<!-- CREATE/EDIT ROLE -->
+<div class="modal-overlay" id="roleModal">
+    <div class="modal">
+        <h2 id="roleModalTitle">Новая роль</h2>
+        <input type="hidden" id="editRoleId">
+        <input type="text" id="roleTitle" placeholder="Название">
+        <textarea id="roleContent" placeholder="Промпт..."></textarea>
+        <button class="btn btn-primary" style="width:100%" onclick="submitRole()">Сохранить</button>
+        <button class="btn" style="width:100%; margin-top:10px" onclick="closeModal('roleModal')">Отмена</button>
+    </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="modal-overlay" id="adminModal">
+    <div class="modal" style="width: 600px;">
+        <h2><i data-feather="shield"></i> Админ Панель</h2>
+        
+        <div class="stat-grid">
+            <div class="stat-box"><div class="stat-num" id="statUsers">0</div><div class="stat-label">Юзеров</div></div>
+            <div class="stat-box"><div class="stat-num" id="statOnline">0</div><div class="stat-label">Онлайн</div></div>
+            <div class="stat-box"><div class="stat-num" id="statUsage">0</div><div class="stat-label">Использований</div></div>
+        </div>
+
+        <h3>Управление пользователями</h3>
+        <div class="user-list" id="adminUserList"></div>
+        
+        <button class="btn" style="width:100%; margin-top:20px" onclick="closeModal('adminModal')">Закрыть</button>
+    </div>
+</div>
+
+<script>
+    feather.replace();
+    const API = "http://127.0.0.1:5050";
+    let currentUser = JSON.parse(localStorage.getItem('echoria_user')) || null;
+    let isRegister = false;
+
+    function init() {
+        updateHeader();
+        loadRoles();
+    }
+
+    function updateHeader() {
+        const block = document.getElementById('authBlock');
+        if (currentUser) {
+            let adminBtn = currentUser.is_admin ? `<button class="btn btn-danger" onclick="openAdminPanel()"><i data-feather="shield"></i> ADMIN</button>` : '';
+            block.innerHTML = `
+                ${adminBtn}
+                <div style="text-align:right">
+                    <div style="font-weight:bold">${currentUser.username}</div>
+                    <div style="font-size:11px; cursor:pointer; color:#888" onclick="logout()">Выйти</div>
+                </div>
+                <img src="${currentUser.avatar}" class="avatar">
+                <button class="btn" onclick="openCreateModal()"><i data-feather="plus"></i></button>
+            `;
+        } else {
+            block.innerHTML = `<button class="btn btn-primary" onclick="openModal('authModal')">Войти</button>`;
+        }
+        feather.replace();
+    }
+
+    async function loadRoles() {
+        const uid = currentUser ? currentUser.user_id : '';
+        const res = await fetch(`${API}/api/roles?user_id=${uid}`);
+        const roles = await res.json();
+        const grid = document.getElementById('rolesGrid');
+        grid.innerHTML = '';
+
+        roles.forEach(role => {
+            const isMine = currentUser && (currentUser.user_id == role.creator_id);
+            const isAdmin = currentUser && currentUser.is_admin;
+            const isLiked = role.is_liked > 0;
+            
+            // Если Админ или Создатель - показываем кнопки управления
+            let controls = '';
+            if (isMine || isAdmin) {
+                controls = `
+                    <div class="edit-controls">
+                        <button class="btn-icon" onclick="openEditModal(${role.id}, '${role.title}', \`${role.content}\`)"><i data-feather="edit-2" style="width:14px"></i></button>
+                        <button class="btn-icon btn-danger" onclick="deleteRole(${role.id})"><i data-feather="trash-2" style="width:14px"></i></button>
+                    </div>
+                `;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onmousemove = (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width/2;
+                const y = e.clientY - rect.top - rect.height/2;
+                card.style.transform = `perspective(1000px) rotateX(${y/-20}deg) rotateY(${x/20}deg)`;
+            };
+            card.onmouseleave = () => card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+
+            // Для админа показываем статистику использования прямо на карточке
+            const usageStat = isAdmin ? `<div class="usage-stat">Исп: ${role.usage_count}</div>` : '';
+
+            card.innerHTML = `
+                <div class="card-meta">
+                    <div class="creator"><img src="${role.creator_avatar}"><span>${role.creator_name}</span></div>
+                    ${controls}
+                </div>
+                <h2>${role.title}</h2>
+                <p>${role.content}</p>
+                ${usageStat}
+                <div class="card-footer">
+                    <button class="like-btn ${isLiked?'active':''}" onclick="toggleLike(${role.id}, this)">
+                        <i data-feather="heart"></i> <span>${role.likes_count}</span>
+                    </button>
+                    <button class="btn btn-primary" onclick="useRole(${role.id}, '${role.title}', \`${role.content}\`)">
+                        Активировать
+                    </button>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+        feather.replace();
+    }
+
+    // --- ROLE ACTIONS ---
+    async function submitRole() {
+        const id = document.getElementById('editRoleId').value;
+        const title = document.getElementById('roleTitle').value;
+        const content = document.getElementById('roleContent').value;
+        
+        if(id) {
+            // EDIT
+            await fetch(`${API}/api/roles/${id}`, {
+                method: 'PUT', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title, content, user_id: currentUser.user_id, is_admin: currentUser.is_admin })
+            });
+        } else {
+            // CREATE
+            await fetch(`${API}/api/roles`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title, content, user_id: currentUser.user_id })
+            });
+        }
+        closeModal('roleModal');
+        loadRoles();
+    }
+
+    async function deleteRole(id) {
+        if(!confirm("Удалить роль?")) return;
+        await fetch(`${API}/api/roles/${id}?user_id=${currentUser.user_id}&is_admin=${currentUser.is_admin}`, { method: 'DELETE' });
+        loadRoles();
+    }
+
+    async function useRole(id, title, content) {
+        if(!confirm(`Загрузить протокол "${title}"?`)) return;
+        await fetch(`${API}/apply_role`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ role_prompt: content, role_id: id })
+        });
+    }
+
+    async function toggleLike(id, btn) {
+        if(!currentUser) return openModal('authModal');
+        const res = await fetch(`${API}/api/like/${id}`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ user_id: currentUser.user_id })
+        });
+        const data = await res.json();
+        btn.classList.toggle('active');
+        btn.querySelector('span').innerText = data.new_count;
+    }
+
+    // --- AUTH ---
+    async function uploadImage() {
+        const input = document.getElementById('authFile');
+        if (input.files[0]) {
+            const formData = new FormData();
+            formData.append('file', input.files[0]);
+            const res = await fetch(`${API}/api/upload`, { method: 'POST', body: formData });
+            return (await res.json()).url;
+        }
+        return null;
+    }
+
+    async function submitAuth() {
+        const name = document.getElementById('authName').value;
+        const pass = document.getElementById('authPass').value;
+        let ava = isRegister ? await uploadImage() : null;
+        
+        const endpoint = isRegister ? '/api/register' : '/api/login';
+        const res = await fetch(`${API}${endpoint}`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ username: name, password: pass, avatar: ava })
+        });
+        const data = await res.json();
+        
+        if (data.status === 'success') {
+            currentUser = data;
+            localStorage.setItem('echoria_user', JSON.stringify(currentUser));
+            closeModal('authModal');
+            init();
+        } else {
+            alert(data.message);
+        }
+    }
+
+    // --- ADMIN PANEL ---
+    async function openAdminPanel() {
+        openModal('adminModal');
+        const res = await fetch(`${API}/api/admin/stats`);
+        const data = await res.json();
+        
+        document.getElementById('statUsers').innerText = data.total_users;
+        document.getElementById('statOnline').innerText = data.online_users;
+        document.getElementById('statUsage').innerText = data.total_usage;
+        
+        const list = document.getElementById('adminUserList');
+        list.innerHTML = '';
+        data.users.forEach(u => {
+            // Не даем удалить Админа
+            if(u.username === "MN·s6O :З") return;
+            
+            list.innerHTML += `
+                <div class="user-item">
+                    <div class="user-info">
+                        <span style="font-weight:bold">${u.username}</span>
+                        <span style="font-size:10px; color:#666">ID: ${u.id}</span>
+                    </div>
+                    <div class="user-actions">
+                        <button class="btn-icon" onclick="adminRenameUser(${u.id}, '${u.username}')"><i data-feather="edit-2" style="width:12px"></i></button>
+                        <button class="btn-icon btn-danger" onclick="adminDeleteUser(${u.id})"><i data-feather="trash-2" style="width:12px"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+        feather.replace();
+    }
+
+    async function adminDeleteUser(id) {
+        if(!confirm("Удалить пользователя? Это действие нельзя отменить.")) return;
+        await fetch(`${API}/api/admin/users/${id}`, { method: 'DELETE' });
+        openAdminPanel(); // Refresh list
+    }
+
+    async function adminRenameUser(id, oldName) {
+        const newName = prompt("Новое имя для пользователя:", oldName);
+        if(newName && newName !== oldName) {
+            const res = await fetch(`${API}/api/admin/users/${id}`, {
+                method: 'PUT', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ new_name: newName })
+            });
+            if(res.ok) openAdminPanel();
+            else alert("Ошибка или имя занято");
+        }
+    }
+
+    // --- MODAL HELPERS ---
+    function toggleAuthMode() {
+        isRegister = !isRegister;
+        document.getElementById('authTitle').innerText = isRegister?"Регистрация":"Вход";
+        document.getElementById('authSwitch').innerText = isRegister?"Войти":"Создать";
+        document.getElementById('regFields').style.display = isRegister?"block":"none";
+    }
+
+    function openCreateModal() {
+        document.getElementById('editRoleId').value = '';
+        document.getElementById('roleTitle').value = '';
+        document.getElementById('roleContent').value = '';
+        document.getElementById('roleModalTitle').innerText = "Новая роль";
+        openModal('roleModal');
+    }
+
+    function openEditModal(id, title, content) {
+        document.getElementById('editRoleId').value = id;
+        document.getElementById('roleTitle').value = title;
+        document.getElementById('roleContent').value = content;
+        document.getElementById('roleModalTitle').innerText = "Редактировать";
+        openModal('roleModal');
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    function logout() { currentUser = null; localStorage.removeItem('echoria_user'); init(); }
+
+    init();
+</script>
+</body>
+</html>
